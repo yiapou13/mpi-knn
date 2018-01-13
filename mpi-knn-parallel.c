@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 		
 	MPI_Barrier(MPI_COMM_WORLD);
 	
-	gettimeofday( &startwtime, NULL );// start timer
+	if (id == 0) gettimeofday( &startwtime, NULL );// start timer
 	
 /**** 1st communication and KNN calculation ****/
 	//Sending starting matrix
@@ -253,9 +253,9 @@ int main(int argc, char **argv)
 
 	MPI_Barrier(MPI_COMM_WORLD);
 		
-	gettimeofday( &endwtime, NULL );// end timer
+	if (id == 0) gettimeofday( &endwtime, NULL );// end timer
 
-	seq_time = (double)( ( endwtime.tv_usec - startwtime.tv_usec ) / 1.0e6 + endwtime.tv_sec - startwtime.tv_sec );
+	if (id == 0) seq_time = (double)( ( endwtime.tv_usec - startwtime.tv_usec ) / 1.0e6 + endwtime.tv_sec - startwtime.tv_sec );
 	
 	MPI_Barrier(MPI_COMM_WORLD);
 	
@@ -282,6 +282,7 @@ int main(int argc, char **argv)
 	}
 	
 	printf("Match percentage: %d\n", matches);
+	if (id == 0) printf("KNN time: %f", seq_time);
 	
 	MPI_Finalize ( );
 	
