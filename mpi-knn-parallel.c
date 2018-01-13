@@ -67,8 +67,6 @@ int main(int argc, char **argv)
 	Xmat = matGetVariable(pmat, "train_X");
 	Lmat = matGetVariable(pmat, "train_labels");
 	
-	omp_set_num_threads(threads);
-	
 	m = mxGetM(Xmat); //number of rows
 	n = mxGetN(Xmat); //number of columns
 	
