@@ -67,6 +67,8 @@ int main(int argc, char **argv)
 	Xmat = matGetVariable(pmat, "train_X");
 	Lmat = matGetVariable(pmat, "train_labels");
 	
+	omp_set_num_threads(threads);
+	
 	m = mxGetM(Xmat); //number of rows
 	n = mxGetN(Xmat); //number of columns
 	
@@ -126,7 +128,6 @@ int main(int argc, char **argv)
 		
 		MPI_Recv ( &(matrix_temp[0][0]), m / procs * (n + 2), MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status );
 		MPI_Send ( &(matrix[0][0]), m / procs * n, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD );
-		printf("DONE\n");
 	}
 	else if (id == numprocs - 1)
 	{
@@ -135,7 +136,6 @@ int main(int argc, char **argv)
 
 		MPI_Send ( &(matrix[0][0]), m / procs * n, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD );
 		MPI_Recv ( &(matrix_temp[0][0]), m / procs * n, MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status );
-		printf("done\n");
 	}
 	else
 	{
@@ -144,15 +144,12 @@ int main(int argc, char **argv)
 		
 		MPI_Recv ( &(matrix_temp[0][0]), m / procs * n, MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 		MPI_Send ( &(matrix[0][0]), m / procs * n, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD );
-		printf("DOne\n");
 	}
 	
 	MPI_Barrier(MPI_COMM_WORLD);
 	
 	//Initializing matrix for the rest of the process
 	double **matrix_send = alloc_2d_double(m / procs , n + 2);
-	
-	omp_set_num_threads(threads);
 	
 	//KNN calculation with OpenMP
 	#pragma omp parallel for
@@ -197,7 +194,6 @@ int main(int argc, char **argv)
 
 			MPI_Recv ( &(matrix_temp[0][0]), m / procs * (n + 2), MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status );
 			MPI_Send ( &(matrix_send[0][0]), m / procs * (n + 2), MPI_DOUBLE, dest, 0, MPI_COMM_WORLD );
-			printf("DONE\n");
 		}
 		else if (id == numprocs - 1)
 		{
@@ -206,7 +202,6 @@ int main(int argc, char **argv)
 
 			MPI_Send ( &(matrix_send[0][0]), m / procs * (n + 2), MPI_DOUBLE, dest, 0, MPI_COMM_WORLD );
 			MPI_Recv ( &(matrix_temp[0][0]), m / procs * (n + 2), MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status );
-			printf("done\n");
 		}
 		else
 		{
@@ -215,7 +210,6 @@ int main(int argc, char **argv)
 
 			MPI_Recv ( &(matrix_temp[0][0]), m / procs * (n + 2), MPI_DOUBLE, source, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 			MPI_Send ( &(matrix_send[0][0]), m / procs * (n + 2), MPI_DOUBLE, dest, 0, MPI_COMM_WORLD );\
-			printf("DOne\n");
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		
@@ -255,11 +249,7 @@ int main(int argc, char **argv)
 
 	if (id == 0) seq_time = (double)( ( endwtime.tv_usec - startwtime.tv_usec ) / 1.0e6 + endwtime.tv_sec - startwtime.tv_sec );
 	
-	MPI_Barrier(MPI_COMM_WORLD);
-	
-/**** Matching labels ****/
-	printf("Process :%d before\n", id);
-	
+/**** Matching labels ****/	
 	for (k = 0; k < m / procs; k++)
 	{
 		int most = 0;
@@ -279,7 +269,7 @@ int main(int argc, char **argv)
 		if (labels[k] == matrix[k][785]) matches++;
 	}
 	
-	printf("Match percentage: %d\n", matches);
+	printf("Matches: %d\n", matches);
 	if (id == 0) printf("KNN time: %f", seq_time);
 	
 	MPI_Finalize ( );
