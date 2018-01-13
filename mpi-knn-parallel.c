@@ -6,8 +6,8 @@
 #include <mpi.h>
 #include "mat.h"
 
-#define NN 30
-#define max 10
+#define NN 30 //number of neigbours
+#define max 10 //number of classes
 
 struct timeval startwtime, endwtime;
 double seq_time;
@@ -21,15 +21,6 @@ typedef struct
 
 void omp_set_num_threads(int);
 int omp_get_num_threads();
-
-int cmpfunc (const void * a, const void * b)
-{
-	double* arg1 = (double *)a;
-	double* arg2 = (double *)b;
-	if( *arg1 < *arg2 ) return -1;
-	else if( *arg1 == *arg2 ) return 0;
-	return 1;
-}
 
 int compare(const void *s1, const void *s2)
 {
@@ -77,7 +68,6 @@ int main(int argc, char **argv)
 	Lmat = matGetVariable(pmat, "train_labels");
 	
 	omp_set_num_threads(threads);
-	MPI_Barrier(MPI_COMM_WORLD);
 	
 	m = mxGetM(Xmat); //number of rows
 	n = mxGetN(Xmat); //number of columns
