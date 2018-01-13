@@ -76,18 +76,8 @@ int main(int argc, char **argv)
 	Xmat = matGetVariable(pmat, "train_X");
 	Lmat = matGetVariable(pmat, "train_labels");
 	
-	FILE *fp;
-	
 	omp_set_num_threads(threads);
-	//printf("Threads :%d", omp_get_num_threads());
 	MPI_Barrier(MPI_COMM_WORLD);
-	/*for (k = 0; k < 2500; k++)
-	{
-		labels[k] = 0;
-		MPI_Barrier(MPI_COMM_WORLD);
-		printf("Labels :%d", labels[k]);
-	}*/
-	
 	
 	m = mxGetM(Xmat); //number of rows
 	n = mxGetN(Xmat); //number of columns
@@ -98,10 +88,7 @@ int main(int argc, char **argv)
 	double *orig_point = (double*) mxGetPr(Xmat); // first ellement of array
 	double *label_point = (double*) mxGetPr(Lmat);
 	
-	gettimeofday( &startwtime, NULL );// start timer
-	
 	double **matrix = alloc_2d_double(m / procs, n + 2);
-	
 	double **matrix_temp = alloc_2d_double(m / procs, n + 2);
 	
 	neighbour **kNNeighbours = (neighbour **)malloc(m / procs * sizeof(neighbour *));
@@ -133,16 +120,14 @@ int main(int argc, char **argv)
 	
 	MPI_Barrier(MPI_COMM_WORLD);
 	
-	//mxDestroyArray(Xmat);
-	//mxDestroyArray(Lmat);
+	mxDestroyArray(Xmat);
+	mxDestroyArray(Lmat);
 	
 	matClose(pmat);
-	
-	//KNN Calculation
-	gettimeofday( &startwtime, NULL );// start timer
-	
-	
+		
 	MPI_Barrier(MPI_COMM_WORLD);
+	
+	gettimeofday( &startwtime, NULL );// start timer
 	
 /**** 1st communication and KNN calculation ****/
 	//Sending starting matrix
@@ -209,12 +194,6 @@ int main(int argc, char **argv)
 		}
 
 	}
-	
-	//gettimeofday( &endwtime, NULL );// end timer
-
-	//seq_time = (double)( ( endwtime.tv_usec - startwtime.tv_usec ) / 1.0e6 + endwtime.tv_sec - startwtime.tv_sec );
-	
-	//KNN Calculation
 	
 	MPI_Barrier(MPI_COMM_WORLD);
 	
@@ -288,18 +267,9 @@ int main(int argc, char **argv)
 
 	seq_time = (double)( ( endwtime.tv_usec - startwtime.tv_usec ) / 1.0e6 + endwtime.tv_sec - startwtime.tv_sec );
 	
-	//matClose(pmat);
-	
-	//mxDestroyArray(Xmat);
-	
 	MPI_Barrier(MPI_COMM_WORLD);
 	
 /**** Matching labels ****/
-	
-	//pmat = matOpen("mnist_train.mat", "r");
-	
-	//Lmat = matGetVariable(pmat, "train_labels");
-
 	printf("Process :%d before\n", id);
 	
 	for (k = 0; k < m / procs; k++)
@@ -323,26 +293,7 @@ int main(int argc, char **argv)
 	
 	printf("Match percentage: %d\n", matches);
 	
-	/*char buf[64];
-	snprintf(buf, sizeof(buf), "log%d.txt", id);
-	printf("Process :%d after\n", id);
-
-	fp = fopen(buf, "w");
-	for (k = 0; k < m / procs; k++)
-	{
-		for (i = 0; i < NN; i++)
-		{
-			fprintf(fp, "Point %d min distance %lf and IDX %d and label %d\t(coordinates %d / %d)\n", (int)(id * m / procs) + k, kNNeighbours[k][i].distance, kNNeighbours[k][i].idx, kNNeighbours[k][i].label, k, i);
-		}
-		
-		fprintf(fp, "Label found: %d \t Original label: %d\n", labels[k], (int)matrix[k][n + 1]);
-	}
-	
-	fclose(fp);*/
-	
 	MPI_Finalize ( );
-	
-	//matClose(pmat);
 	
 	return 0;
 }
